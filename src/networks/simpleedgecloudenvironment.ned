@@ -21,21 +21,18 @@ import ecsnetpp.host.CloudNodeA;
 import ecsnetpp.builder.TaskBuilder;
 import ecsnetpp.builder.ECSBuilder;
 import ecsnetpp.common.SimulationController;
-import inet.visualizer.integrated.IntegratedCanvasVisualizer;
-import inet.networklayer.configurator.ipv4.IPv4NetworkConfigurator;
-import inet.physicallayer.ieee80211.packetlevel.Ieee80211ScalarRadioMedium;
-import inet.common.lifecycle.LifecycleController;
-import inet.common.figures.DelegateSignalConfigurator;
-import inet.networklayer.configurator.ipv4.IPv4NetworkConfigurator;
-import inet.node.inet.INetworkNode;
-import inet.physicallayer.contract.packetlevel.IRadioMedium;
+import inet.visualizer.canvas.integrated.IntegratedCanvasVisualizer;
+import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
+import inet.physicallayer.wireless.ieee80211.packetlevel.Ieee80211ScalarRadioMedium;
+import inet.node.contract.INetworkNode;
+import inet.physicallayer.wireless.common.contract.packetlevel.IRadioMedium;
 import inet.visualizer.contract.IIntegratedVisualizer;
 import inet.node.ethernet.Eth100M;
 import inet.node.ethernet.Eth10M;
 import inet.node.ethernet.Eth100G;
 import inet.node.ethernet.Eth1G;
-import inet.node.ethernet.EtherLink;
-import inet.node.ethernet.EtherSwitch;
+import inet.node.ethernet.EthernetLink;
+import inet.node.ethernet.EthernetSwitch;
 import inet.node.inet.Router;
 import inet.node.internetcloud.InternetCloud;
 import inet.node.wireless.AccessPoint;
@@ -44,8 +41,8 @@ import ned.DatarateChannel;
 network SimpleEdgeCloudEnvironment
 {
     parameters:
-        double eToCDelayMean @unit(ms) = default(0ms);
-        double eToCDelayStdev @unit(ms) = default(0ms);
+        double eToCDelayMean @unit(s) = default(0s);
+        double eToCDelayStdev @unit(s) = default(0s);
         double eToCDatarate @unit(bps) = default(1Gbps);
         bool ackersEnabled = default(false);
         bool hasGlobalSupervisor = default(true);
@@ -57,14 +54,14 @@ network SimpleEdgeCloudEnvironment
     types:
         channel E2C_low extends DatarateChannel
         {
-            delay = 0;
-            datarate = eToCDatarate;
+            delay = 0s;
+            datarate = parent.eToCDatarate;
         }
 
         channel E2C_high extends DatarateChannel
         {
-            delay = eToCDelayMean;
-            datarate = eToCDatarate;
+            delay = parent.eToCDelayMean;
+            datarate = parent.eToCDatarate;
         }
     submodules:
         pi2Bs[numPiModel2Bs]: RaspberryPiModel2B;
@@ -90,14 +87,11 @@ network SimpleEdgeCloudEnvironment
         radioMedium: Ieee80211ScalarRadioMedium {
             @display("p=344.608,38.447998");
         }
-        configurator: IPv4NetworkConfigurator {
+        configurator: Ipv4NetworkConfigurator {
             @display("p=193.664,38.447998");
         }
         visualizer: IntegratedCanvasVisualizer {
             @display("p=629.408,38.447998");
-        }
-        lifecycleController: LifecycleController {
-            @display("p=24.208,41.295998");
         }
     connections:
         stargazer3.ethg++ <--> E2C_high <--> albacore5.ethg++;

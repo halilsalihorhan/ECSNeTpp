@@ -23,9 +23,9 @@ Define_Module(GlobalStreamingSupervisor);
 void GlobalStreamingSupervisor::initialize() {
     socket.setOutputGate(gate("udpOut"));
     bindMsg = new cMessage("UDP_C_BIND", inet::UDP_C_BIND);
-    inet::UDPBindCommand *ctrl2 = new inet::UDPBindCommand();
-    int socketId = inet::UDPSocket::generateSocketId();
-    ctrl2->setSockId(socketId);
+    inet::UdpBindCommand *ctrl2 = new inet::UdpBindCommand();
+//    int socketId = ;
+//    ctrl2->setSockId(socketId);
     ctrl2->setLocalPort(1000);
     bindMsg->setControlInfo(ctrl2);
     send(bindMsg, "udpOut");
@@ -39,8 +39,9 @@ void GlobalStreamingSupervisor::handleMessage(cMessage *msg) {
                 senderStaskCategoryToDownstreamNodeIPMap[sender];
         for (size_t i = 0; i < _downstreamNodes.size(); i++) {
             socket.connect(_downstreamNodes[i], 1000);
+            inet::Packet* packet = check_and_cast<inet::Packet*>(msgToSend->dup());
 
-            socket.send(msgToSend->dup());
+            socket.send(packet);
             socket.close();
         }
         delete msgToSend;

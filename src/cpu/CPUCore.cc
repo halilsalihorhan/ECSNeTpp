@@ -37,8 +37,8 @@ void CPUCore::initialize() {
     ackersEnabled = getAncestorPar("ackersEnabled").boolValue();
     perCoreFreq = getAncestorPar("perCoreFreq").doubleValue();
     parallelisationFactor = par("parallelisationFactor").doubleValue();
-    threadsPerCore = getAncestorPar("threadsPerCore").longValue();
-    totalCores = getAncestorPar("cores").longValue();
+    threadsPerCore = getAncestorPar("threadsPerCore").intValue();
+    totalCores = getAncestorPar("cores").intValue();
     isOnEdgeDevice = getAncestorPar("isEdgeDevice").boolValue();
     std::cout<< "Cores: " << getParentModule()->getFullPath() << " : " << totalCores << endl;
 //    timerMsg = new cMessage();
@@ -71,7 +71,7 @@ void CPUCore::handleMessage(cMessage *msg) {
         emit(ISTask::cpuStateChangedSignal, States::CPU_BUSY);
         StreamingMessage *msgToProcess = check_and_cast<StreamingMessage *>(msg);
         msgToProcess->setOperatorIngressTime(simTime());
-        bool isProcessingDelayInCpuCycles = msgToProcess->getIsProcessingDelayInCyclesPerEvent();
+        bool isProcessingDelayInCpuCycles = msgToProcess->isProcessingDelayInCyclesPerEvent();
         double processingDelay = msgToProcess->getProcessingDelayPerEvent();
 //        double cyclesPerEvent = msgToProcess->getCyclesPerEvent();
         int senderModuleId = msgToProcess->getSenderModuleId();

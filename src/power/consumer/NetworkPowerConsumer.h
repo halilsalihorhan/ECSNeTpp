@@ -16,7 +16,7 @@
 #ifndef POWER_CONSUMER_NETWORKPOWERCONSUMER_H_
 #define POWER_CONSUMER_NETWORKPOWERCONSUMER_H_
 
-#include "inet/physicallayer/contract/packetlevel/IRadio.h"
+#include "inet/physicallayer/wireless/common/contract/packetlevel/IRadio.h"
 #include "inet/power/contract/IEpEnergyConsumer.h"
 #include "inet/power/contract/IEpEnergySource.h"
 
@@ -62,7 +62,7 @@ protected:
 
 public:
     virtual W getPowerConsumption() const {return powerConsumption;}
-    virtual void receiveSignal(cComponent *source, simsignal_t signal, long value, cObject *details) override;
+    virtual void receiveSignal(cComponent *source, simsignal_t signal, intval_t value, cObject *details) override;
 };
 
 }

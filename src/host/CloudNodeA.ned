@@ -22,7 +22,7 @@ import ecsnetpp.cpu.scheduling.ICpuCoreScheduler;
 import ecsnetpp.cpu.scheduling.RoundRobinCpuCoreScheduler;
 import inet.node.inet.StandardHost;
 import inet.node.inet.WirelessHost;
-import inet.node.inet.NodeBase;
+import inet.node.base.NodeBase;
 
 module CloudNodeA extends StandardHost
 {
@@ -51,10 +51,10 @@ module CloudNodeA extends StandardHost
         cpuCoreScheduler : <cpuCoreSchedulerType> like ICpuCoreScheduler if cpuCoreSchedulerType != "";
         acker: Acker if hasAcker;
     connections allowunconnected:
-        supervisor.udpIn <-- udp.appOut++ if hasUdp;
-        supervisor.udpOut --> udp.appIn++ if hasUdp;
-        supervisor.tcpIn <-- tcp.appOut++ if hasTcp;
-        supervisor.tcpOut --> tcp.appIn++ if hasTcp;
+          supervisor.udpIn <-- at.out++ if hasUdp;
+        supervisor.udpOut --> at.in++ if hasUdp;
+        supervisor.tcpIn <-- at.out++ if hasTcp;
+        supervisor.tcpOut --> at.in++ if hasTcp;
         // connect supervisor to acker 
         // only if the acker is placed in this node
         supervisor.ackerOut++ --> acker.ackerIn if hasAcker;

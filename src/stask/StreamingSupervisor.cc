@@ -5,11 +5,11 @@
  *      Author: gayashan
  */
 
-#include "inet/transportlayer/contract/udp/UDPSocket.h"
-#include "inet/transportlayer/contract/tcp/TCPSocket.h"
+#include "inet/transportlayer/contract/udp/UdpSocket.h"
+#include "inet/transportlayer/contract/tcp/TcpSocket.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
-#include "inet/transportlayer/contract/udp/UDPControlInfo_m.h"
-#include "inet/transportlayer/contract/tcp/TCPCommand_m.h"
+#include "inet/transportlayer/contract/udp/UdpControlInfo_m.h"
+#include "inet/transportlayer/contract/tcp/TcpCommand_m.h"
 #include "../msg/StreamingMessage_m.h"
 #include "../msg/Ack_m.h"
 #include "StreamingSupervisor.h"
@@ -37,7 +37,7 @@ void StreamingSupervisor::initialize() {
         udpSocket.setOutputGate(gate("udpOut"));
     } else if (hasTcp) {
         serverSocket.setOutputGate(gate("tcpOut"));
-        serverSocket.readDataTransferModePar(*this);
+//        serverSocket.readDataTransferModePar(*this);
         serverSocket.bind(1000);
         serverSocket.listen();
     }
@@ -50,9 +50,9 @@ void StreamingSupervisor::initialize() {
 void StreamingSupervisor::processSelfMessage() {
     if (hasUdp) {
         bindMsg = new cMessage("UDP_C_BIND", inet::UDP_C_BIND);
-        inet::UDPBindCommand* ctrl2 = new inet::UDPBindCommand();
-        int socketId = inet::UDPSocket::generateSocketId();
-        ctrl2->setSockId(socketId);
+        inet::UdpBindCommand* ctrl2 = new inet::UdpBindCommand();
+//        int socketId = inet::UDPSocket::generateSocketId();
+//        ctrl2->setSockId(socketId);
         //        ctrl2->setLocalAddr(inet::L3AddressResolver().resolve("225.0.0.1"));
         ctrl2->setLocalPort(1000);
         bindMsg->setControlInfo(ctrl2);
@@ -60,8 +60,8 @@ void StreamingSupervisor::processSelfMessage() {
         // Join the multicast group only if the node connects to a sink
         if (joinMulticastGroup) {
             joinMCastMsg = new cMessage("UDP_C_SETOPTION", inet::UDP_C_SETOPTION);
-            inet::UDPJoinMulticastGroupsCommand* ctrl = new inet::UDPJoinMulticastGroupsCommand();
-            ctrl->setSockId(socketId);
+            inet::UdpJoinMulticastGroupsCommand* ctrl = new inet::UdpJoinMulticastGroupsCommand();
+//            ctrl->setSockId(socketId);
             ctrl->setMulticastAddrArraySize(1);
             ctrl->setMulticastAddr(0, inet::L3AddressResolver().resolve(cloudAddress));
             joinMCastMsg->setControlInfo(ctrl);
@@ -81,7 +81,8 @@ void StreamingSupervisor::processUDPMessage(cMessage* msg) {
             std::vector<inet::L3Address> _downstreamNodes = senderStaskCategoryToDownstreamNodeIPMap[sender];
             for (size_t i = 0; i < _downstreamNodes.size(); i++) {
                 udpSocket.connect(_downstreamNodes[i], 1000);
-                udpSocket.send(msgToSend->dup());
+                inet::Packet* packet = check_and_cast<inet::Packet*>(msgToSend->dup());
+                udpSocket.send(packet);
                 udpSocket.close();
             }
             delete msgToSend;
@@ -89,7 +90,8 @@ void StreamingSupervisor::processUDPMessage(cMessage* msg) {
             const char* ackerAddress = getAncestorPar("ackerAddress").stringValue();
             udpSocket.connect(inet::L3AddressResolver().resolve(ackerAddress), 1000);
             Ack* ack = check_and_cast<Ack*>(msg);
-            udpSocket.send(ack);
+            inet::Packet* packet = check_and_cast<inet::Packet*>(ack);
+            udpSocket.send(packet);
             udpSocket.close();
         }
     } else {
@@ -127,29 +129,29 @@ void StreamingSupervisor::processTCPMessage(cMessage* msg) {
             std::vector<inet::L3Address> _downstreamNodes = senderStaskCategoryToDownstreamNodeIPMap[sender];
 //            std::cout << ">>>>>>>>>>>>>TEST" << msg->getKind() << " Sender=" << sender << " recpts="<< _downstreamNodes.size() << endl;
             for (size_t i = 0; i < _downstreamNodes.size(); i++) {
-                inet::TCPSocket* sock = destinationSocketMap[_downstreamNodes[i]];
+                inet::TcpSocket* sock = destinationSocketMap[_downstreamNodes[i]];
                 if (!sock) {
 //                std::cout << "RR=" << _downstreamNodes[i] << endl;
-                    sock = new inet::TCPSocket();
+                    sock = new inet::TcpSocket();
                     sock->setOutputGate(gate("tcpOut"));
-                    sock->readDataTransferModePar(*this);
-                    sock->setCallbackObject(this, nullptr);
+//                    sock->readDataTransferModePar(*this);
+                    sock->setCallback(this);
                     tcpSocketMap.addSocket(sock);
                     destinationSocketMap[_downstreamNodes[i]] = sock;
                     sock->connect(_downstreamNodes[i], 1000);
                 }
 //                std::cout << "Sending: " << msgToSend->getByteLength() << endl;
-                sock->send(msgToSend->dup());
+                sock->sendToTcp(msgToSend->dup());
             }
             delete msgToSend;
         }
     } else {
-        inet::TCPSocket* socket = tcpSocketMap.findSocketFor(msg);
+        inet::TcpSocket* socket = (inet::TcpSocket*) tcpSocketMap.findSocketFor(msg);
         if (!socket) {
-            socket = new inet::TCPSocket(msg);
+            socket = new inet::TcpSocket(msg);
             socket->setOutputGate(gate("tcpOut"));
-            socket->readDataTransferModePar(*this);
-            socket->setCallbackObject(this, nullptr);
+//            socket->readDataTransferModePar(*this);
+            socket->setCallback(this);
             tcpSocketMap.addSocket(socket);
         }
         socket->processMessage(msg);
@@ -171,22 +173,22 @@ void StreamingSupervisor::handleMessage(cMessage *msg) {
     }
 }
 
-void StreamingSupervisor::socketDataArrived(int connId, void *yourPtr, cPacket *msg, bool urgent) {
+void StreamingSupervisor::socketDataArrived(inet::TcpSocket *socket, inet::Packet *packet, bool urgent) {
 //    StreamingMessage *pk = check_and_cast<StreamingMessage *>(msg);
 //    std::cout << "Received TCP data, " << msg->getByteLength() << " Length:" << pk->getByteLength() << " bytes" << endl;
 //    std::cout << getParentModule()->getFullPath() << "Proc delay: " << pk->getProcessingDelay() << endl;
     if (!ackersEnabled && !checkpointsEnabled) {
-        StreamingMessage* msgToSend = check_and_cast<StreamingMessage*>(msg);
+        StreamingMessage* msgToSend = check_and_cast<StreamingMessage*>(packet);
         const omnetpp::SimTime _networkDelay = simTime() - msgToSend->getChannelIngressTime();
         msgToSend->setNetworkDelay(_networkDelay.dbl());
         for (int i = 0; i < gateSize("streamingPortOut"); i++) {
             send(msgToSend->dup(), "streamingPortOut", i);
         }
     } else {
-        Ack *ack = dynamic_cast<Ack *>(msg);
+        Ack *ack = dynamic_cast<Ack *>(packet);
         if (nullptr == ack) {
             for (int i = 0; i < gateSize("streamingPortOut"); i++) {
-                send(msg->dup(), "streamingPortOut", i);
+                send(packet->dup(), "streamingPortOut", i);
             }
         } else {
             for (int i = 0; i < gateSize("ackerOut"); i++) {
@@ -194,10 +196,10 @@ void StreamingSupervisor::socketDataArrived(int connId, void *yourPtr, cPacket *
             }
         }
     }
-    delete msg;
+    delete packet;
 }
 
-void StreamingSupervisor::socketFailure(int connId, void *yourPtr, int code) {
+void StreamingSupervisor::socketFailure(inet::TcpSocket *socket, int code) {
     if (code == inet::TCP_I_CONNECTION_RESET)
         EV << "Connection reset!\\n";
     else if (code == inet::TCP_I_CONNECTION_REFUSED)
@@ -205,6 +207,25 @@ void StreamingSupervisor::socketFailure(int connId, void *yourPtr, int code) {
     else if (code == inet::TCP_I_TIMED_OUT)
         EV << "Connection timed out!\\n";
 }
+void StreamingSupervisor::socketAvailable(inet::TcpSocket *socket, inet::TcpAvailableInfo *availableInfo) {
+
+}
+void StreamingSupervisor::socketEstablished(inet::TcpSocket *socket) {
+
+}
+void StreamingSupervisor::socketPeerClosed(inet::TcpSocket *socket) {
+
+}
+void StreamingSupervisor::socketClosed(inet::TcpSocket *socket) {
+
+}
+void StreamingSupervisor::socketStatusArrived(inet::TcpSocket *socket, inet::TcpStatusInfo *status) {
+
+}
+void StreamingSupervisor::socketDeleted(inet::TcpSocket *socket) {
+
+}
+
 
 void StreamingSupervisor::processUDPPacket(cMessage *msg) {
     for (int i = 0; i < gateSize("streamingPortOut"); i++) {

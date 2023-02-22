@@ -114,7 +114,7 @@ void ECSBuilder::executeAllocationPlan(cModule *parent) {
             bool delayInTime = false;
             const char* delay;
 
-            cBoolParImpl* isProcessingDelayInCpuCyclesPar = new cBoolParImpl();
+            omnetpp::internal::cBoolParImpl* isProcessingDelayInCpuCyclesPar = new omnetpp::internal::cBoolParImpl();
             isProcessingDelayInCpuCyclesPar->setName("isProcessingDelayInCpuCycles");
             isProcessingDelayInCpuCyclesPar->setBoolValue(false);
 
@@ -174,7 +174,7 @@ void ECSBuilder::executeAllocationPlan(cModule *parent) {
 //                    stask->addPar(processingTimePerEvent);
 //                }
 
-                cDoubleParImpl *processingDelayPerEvent = new cDoubleParImpl();
+                omnetpp::internal::cDoubleParImpl *processingDelayPerEvent = new omnetpp::internal::cDoubleParImpl();
                 processingDelayPerEvent->setName("processingDelayPerEvent");
                 processingDelayPerEvent->setDoubleValue(atof(delay));
                 stask->addPar(processingDelayPerEvent);
@@ -182,7 +182,7 @@ void ECSBuilder::executeAllocationPlan(cModule *parent) {
                 // add previously created boolean par
                 stask->addPar(isProcessingDelayInCpuCyclesPar);
 
-                cStringParImpl *mySTaskCategory = new cStringParImpl();
+                omnetpp::internal::cStringParImpl *mySTaskCategory = new omnetpp::internal::cStringParImpl();
                 mySTaskCategory->setName("mySTaskCategory");
                 mySTaskCategory->setStringValue(staskCategory);
                 stask->addPar(mySTaskCategory);
@@ -267,7 +267,7 @@ void ECSBuilder::executeAllocationPlan(cModule *parent) {
                 ss << staskDownstreamCategoryToSenderMap[_srcSTaskCategory][i];
             }
 
-            cStringParImpl *mySenders = new cStringParImpl();
+            omnetpp::internal::cStringParImpl *mySenders = new omnetpp::internal::cStringParImpl();
             mySenders->setName("mySenders");
             mySenders->setStringValue(ss.str().c_str());
             _src->addPar(mySenders);
@@ -399,7 +399,7 @@ void ECSBuilder::setupDistribution(XMLElement* task, const char* taskDistributio
 
     XMLElement* taskDistributionXmlElement = task->FirstChildElement(taskDistributionXmlElementName);
 
-    cBoolParImpl *isDistributionEnabledBoolPar = new cBoolParImpl();
+    omnetpp::internal::cBoolParImpl *isDistributionEnabledBoolPar = new omnetpp::internal::cBoolParImpl();
     isDistributionEnabledBoolPar->setName(isDistributionEnabledBoolVarName);
     isDistributionEnabledBoolPar->setBoolValue(false);
 
@@ -409,7 +409,7 @@ void ECSBuilder::setupDistribution(XMLElement* task, const char* taskDistributio
 
         isDistributionEnabledBoolPar->setBoolValue(true);
 
-        cStringParImpl *distributionModule = new cStringParImpl();
+        omnetpp::internal::cStringParImpl *distributionModule = new omnetpp::internal::cStringParImpl();
         distributionModule->setName(distributionModuleName);
         distributionModule->setStringValue(distName);
         stask->addPar(distributionModule);
@@ -428,7 +428,7 @@ void ECSBuilder::setupDistribution(XMLElement* task, const char* taskDistributio
                 const char* distValue = distValueElement->GetText();
                 const char* distValueName = distValueElement->Name();
 
-                cDoubleParImpl *distValuePar = new cDoubleParImpl();
+                omnetpp::internal::cDoubleParImpl *distValuePar = new omnetpp::internal::cDoubleParImpl();
                 distValuePar->setName(distValueName);
                 double __distValue = atof(distValue);
                 distValuePar->setDoubleValue(__distValue);
@@ -444,7 +444,7 @@ void ECSBuilder::setupDistribution(XMLElement* task, const char* taskDistributio
         // if a distribution is not specified, read the fixed value for the parameter
         // TODO handle the scenario if this value is not present
         const char* nonDistributedValue = task->FirstChildElement(nonDistributedValueXmlElementName)->GetText();
-        cDoubleParImpl *nonDistributedValuePar = new cDoubleParImpl();
+        omnetpp::internal::cDoubleParImpl *nonDistributedValuePar = new omnetpp::internal::cDoubleParImpl();
         nonDistributedValuePar->setName(nonDistributedValueVarName);
         nonDistributedValuePar->setDoubleValue(atof(nonDistributedValue));
         stask->addPar(nonDistributedValuePar);

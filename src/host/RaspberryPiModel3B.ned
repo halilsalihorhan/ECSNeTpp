@@ -21,7 +21,7 @@ import ecsnetpp.cpu.CPUCore;
 import inet.node.inet.StandardHost;
 import inet.node.inet.AdhocHost;
 import inet.node.inet.WirelessHost;
-import inet.node.inet.NodeBase;
+import inet.node.base.NodeBase;
 import inet.power.contract.IEnergyConsumer;
 import ecsnetpp.power.consumer.CPUPowerConsumer;
 import ecsnetpp.power.consumer.NetworkPowerConsumer;
@@ -58,10 +58,10 @@ module RaspberryPiModel3B extends WirelessHost
         networkPowerConsumer: NetworkPowerConsumer;
         energyStore: IdealNodeEnergyStorage;
     connections allowunconnected:
-        supervisor.udpIn <-- udp.appOut++ if hasUdp;
-        supervisor.udpOut --> udp.appIn++ if hasUdp;
-        supervisor.tcpIn <-- tcp.appOut++ if hasTcp;
-        supervisor.tcpOut --> tcp.appIn++ if hasTcp;
+        supervisor.udpIn <-- at.out++ if hasUdp;
+        supervisor.udpOut --> at.in++ if hasUdp;
+        supervisor.tcpIn <-- at.out++ if hasTcp;
+        supervisor.tcpOut --> at.in++ if hasTcp;
         // connect supervisor to acker 
         // only if the acker is placed in this node
         supervisor.ackerOut++ --> acker.ackerIn if hasAcker;
